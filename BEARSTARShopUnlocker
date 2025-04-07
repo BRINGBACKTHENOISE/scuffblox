@@ -1,0 +1,53 @@
+-- idk how well this one's gonna work. i tested it and it got bears, survivors, social gears and kill effects on just fine, but i didn't have the other categories unlocked so yeah
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+
+local ITEM_DATA = ReplicatedStorage:WaitForChild("ITEM_DATA")
+
+-- recursive function to gather all ModuleScripts in the folder tree
+local function getAllModuleScripts(folder)
+	local modules = {}
+
+	for _, item in ipairs(folder:GetDescendants()) do
+		if item:IsA("ModuleScript") then
+			table.insert(modules, item)
+		end
+	end
+
+	return modules
+end
+
+local allModules = getAllModuleScripts(ITEM_DATA)
+
+for _, module in ipairs(allModules) do
+	local success, data = pcall(require, module)
+
+	if success and typeof(data) == "table" then
+		data.Onsale = true
+
+		-- lua table bullshit
+		local lines = {"return {"}
+		for key, value in pairs(data) do
+			local formattedValue
+
+			if typeof(value) == "string" then
+				formattedValue = '"' .. value .. '"'
+			elseif typeof(value) == "boolean" then
+				formattedValue = tostring(value)
+			elseif typeof(value) == "number" then
+				formattedValue = value
+			else
+				formattedValue = "nil"
+			end
+
+			table.insert(lines, string.format('\t["%s"] = %s,', key, formattedValue))
+		end
+		table.insert(lines, "}")
+
+		-- Update module source
+		module.Source = table.concat(lines, "\n")
+	else
+		warn("Failed to require or parse table in:", module:GetFullName())
+	end
+end
