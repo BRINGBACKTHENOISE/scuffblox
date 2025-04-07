@@ -1,0 +1,42 @@
+-- as for most unlockers, you will not be able to buy the skins, all you can do is view them in shop, have fun there's some interesting shit in there.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GameContent = ReplicatedStorage:WaitForChild("GameContent")
+local HttpService = game:GetService("HttpService")
+
+local foldersToEdit = {
+    "BearSkins",
+    "KillEffects",
+    "SocialGears"
+}
+
+for _, folderName in ipairs(foldersToEdit) do
+    local folder = GameContent:FindFirstChild(folderName)
+
+    if folder and folder:IsA("Folder") then
+        for _, module in ipairs(folder:GetChildren()) do
+            if module:IsA("ModuleScript") then
+                local success, data = pcall(require, module)
+
+                if success and typeof(data) == "table" then
+                    data.Onsale = true
+
+                    -- Serialize the table
+                    local serialized = "return " .. HttpService:JSONEncode(data)
+
+                    -- clean up formatting to look closer to a LUA table because i'm a picky bastard
+                    serialized = serialized:gsub('{"', '{\n\t"')
+                    serialized = serialized:gsub(',"', ',\n\t"')
+                    serialized = serialized:gsub('}', '\n}')
+                    
+                    -- Overwrite the source
+                    module.Source = serialized
+                else
+                    warn("Could not load module or invalid format in:", module.Name)
+                end
+            end
+        end
+    else
+        warn("Folder not found or invalid:", folderName)
+    end
+end
