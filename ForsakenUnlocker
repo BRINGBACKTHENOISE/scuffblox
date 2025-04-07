@@ -1,0 +1,61 @@
+-- ⚠ all content will appear IN YOUR INVENTORY. ⚠
+
+-- this one was actually kind of easy to make except you gotta specify your username first, other than that, this build is unstable and unfinished as i try to code in skins so please report bugs @ https://github.com/BRINGBACKTHENOISE/scuffblox
+-- know that you can't actually open the ui on survivors and killers you don't own on server side, and you can't use emotes you don't own on the server either, bullshit but forsaken devs are smart
+-- tldr: ui no work, to see skins of killer and survivor you need to actually own them. if any forsaken devs are reading this can you make some actually fucking public killers?
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+-- Replace this with your username if needed
+local player = Players:FindFirstChild("abcdefg") -- you'd put your username here
+if not player then return warn("Player not found!") end
+
+local assetsFolder = ReplicatedStorage:WaitForChild("Assets")
+local playerData = player:WaitForChild("PlayerData")
+local purchased = playerData:WaitForChild("Purchased")
+
+-- List of categories that use subfolders as items (not ModuleScripts)
+local folderBasedCategories = {
+	["Killers"] = true,
+	["Survivors"] = true
+}
+
+for _, assetCategory in ipairs(assetsFolder:GetChildren()) do
+	if assetCategory:IsA("Folder") then
+		local categoryName = assetCategory.Name
+		local playerCategoryFolder = purchased:FindFirstChild(categoryName)
+
+		if playerCategoryFolder and playerCategoryFolder:IsA("Folder") then
+			if folderBasedCategories[categoryName] then
+				-- Use subfolder names as BoolValue names
+				for _, subfolder in ipairs(assetCategory:GetChildren()) do
+					if subfolder:IsA("Folder") then
+						if not playerCategoryFolder:FindFirstChild(subfolder.Name) then
+							local boolVal = Instance.new("BoolValue")
+							boolVal.Name = subfolder.Name
+							boolVal.Value = false
+							boolVal.Parent = playerCategoryFolder
+						end
+					end
+				end
+			else
+				-- Use ModuleScripts as BoolValue names
+				for _, module in ipairs(assetCategory:GetChildren()) do
+					if module:IsA("ModuleScript") then
+						if not playerCategoryFolder:FindFirstChild(module.Name) then
+							local boolVal = Instance.new("BoolValue")
+							boolVal.Name = module.Name
+							boolVal.Value = false
+							boolVal.Parent = playerCategoryFolder
+						end
+					end
+				end
+			end
+		else
+			warn("Missing player folder for category: " .. categoryName)
+		end
+	end
+end
+
+print("✅ BoolValues created for Emotes, Skins, Killers, and Survivors.")
